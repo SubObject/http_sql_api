@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"http_sql_api/config"
+	"http_sql_api/service"
 )
 
 var (
@@ -21,5 +22,6 @@ func main() {
 	if err != nil {
 		os.Exit(3)
 	}
-	
+	server := service.NewServer()
+	server.Run(config.AppConfig.ListenPort)
 }
