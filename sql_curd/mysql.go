@@ -11,17 +11,11 @@ import (
 )
 
 //连接类型
-func (m *Models) Db(connect interface{}) *Models{
+func (m *Models) Db() *Models{
 	m.PrimaryKey="id"
 	m.Fieldes="*"
 	m.WhereFrequency=0
 	m.QuoteIdentifier="`"
-	switch connect := connect.(type) {
-	case string:
-		m.LibraryName=connect
-	default:
-		m.LibraryName=""
-	}
 	m.ParamIdentifier = config.AppConfig.DataBaseType
 	return m
 }
@@ -74,7 +68,7 @@ func (m *Models) Field(fields string) *Models {
 							if field_ary_d[i] != "`" &&  field_ary_d[i] != "" {
 								field_ary_str := fmt.Sprintf("`%v`",field_ary_d[i])
 								val=m.judgeAliasName(field_ary_str)
-								field_str = append(field_str,field_ary_str)
+								field_str = append(field_str,val)
 							}
 						}
 					}
@@ -104,7 +98,7 @@ func (m *Models) Field(fields string) *Models {
 //判断是否有数据别名
 func  (m *Models)judgeAliasName(val string) string {
 	if len(m.AliasName) != 0 {
-		val=fmt.Sprintf("%v.%v",m.Alias,val)
+		val=fmt.Sprintf("%v.%v",m.AliasName,val)
 	}
 	return val
 }
@@ -298,6 +292,33 @@ func (m *Models) Limit(star int,size ...int) *Models {
 
 //多表链接
 func (m *Models) Join(tablename string,condition string,method string) *Models {
+
+	field_ary_k := strings.Split(tablename," ")
+	if len(field_ary_k) == 2 {
+		field_ary_d := strings.Split(field_ary_k[0],"`")
+		if len(field_ary_d) == 3 {
+			tablename = fmt.Sprintf("`%v` %v",field_ary_k[0],field_ary_k[1])
+		}else{
+			for i:=0; i<len(field_ary_d); i++ {
+				if field_ary_d[i] != "`" &&  field_ary_d[i] != "" {
+					tablename = fmt.Sprintf("`%v` %v",field_ary_k[0],field_ary_k[1])
+				}
+			}
+		}
+	}else{
+		field_ary_d := strings.Split(tablename,"`")
+		if len(field_ary_d) == 3 {
+			tablename = tablename
+		}else{
+			for i:=0; i<len(field_ary_d); i++ {
+				if field_ary_d[i] != "`" &&  field_ary_d[i] != "" {
+					tablename = fmt.Sprintf("`%v`",field_ary_d[i])
+				}
+			}
+		}
+	}
+	
+
 	if m.WhereFrequency == 1 {
 		m.JoinStr = fmt.Sprintf("%v JOIN %v ON %v", strings.ToUpper(method),tablename,condition)
 	}else{

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"flag"
 	"os"
 
@@ -16,23 +15,20 @@ var (
 )
 
 func main() {
-	fmt.Println("启动程序,开始加载基础配置...")
-	flag.Parse()
 	
-	configSetUp, err := config.LoadSystemConfig(*systemConfigFiles)
-	fmt.Println(configSetUp)
+	flag.Parse()
+	//加载基础配置
+	err := config.LoadSystemConfig(*systemConfigFiles)
 	if err != nil {
 		os.Exit(3)
 	}
-	fmt.Println("开始加载Mysql基础配置...")
-	mysqlSetUp, mysql_err :=  config.LoadDataBaseConfig(*dataBestConfigFiles)
-	fmt.Println(mysqlSetUp)
+	//加载Mysql基础配置
+	mysql_err :=  config.LoadDataBaseConfig(*dataBestConfigFiles)
 	if mysql_err != nil {
 		os.Exit(3)
 	}
-	fmt.Println("开始加载Redis基础配置...")
-	redisSetUp, redis_err :=  config.LoadRedisConfig(*redisConfigFiles)
-	fmt.Println(redisSetUp)
+	//加载Redis基础配置
+	redis_err :=  config.LoadRedisConfig(*redisConfigFiles)
 	if redis_err != nil {
 		os.Exit(3)
 	}

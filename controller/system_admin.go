@@ -12,22 +12,26 @@ func SelectSystemAdmin()  http.HandlerFunc  {
 	prt := outputformat.JsonOut{}
 
 	
-	// username := "herenshan"
-	// Whe_ary := sql_curd.SetMapOut()
-	// Whe_ary["username"]=sql_curd.Setwhere{"=",username}
+	username := "herenshan"
+	Whe_ary := sql_curd.SetMapOut()
+	Whe_ary["username"]=sql_curd.Setwhere{"=",username}
 
 	ord_ary :=	sql_curd.SetMapOut()
 	ord_ary["id"]="desc"
-	ord_ary["creader"]="desc"
+	ord_ary["creade"]="desc"
 
-	//list,_ :=sql_model.Db().TableNames("system_admin").Where(Whe_ary)->Find()
-	// list := sql_model.Db()
+	
+	list, err :=sql_model.Db().TableNames("system_admin").Alias("sq").Field("*").Where(Whe_ary).OrderBy(ord_ary).Limit(1,20).Select()
 
-	// fmt.Println(list)
+	data := outputformat.MapOut()	
+	
+	data["list"]=list
 
+	
 	prt.Code = 200
-	prt.Msg = "通讯成功！=>SelectSystemAdmin"
-	prt.Data=ord_ary
+	prt.Msg = "通讯成功！"
+	prt.Data=data
+	prt.ErrMsg=err
 	
 	return outputformat.OutPutJson(prt)
 }
