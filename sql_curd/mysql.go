@@ -25,6 +25,13 @@ func (m *Models) Db(connect interface{}) *Models{
 	m.ParamIdentifier = config.AppConfig.DataBaseType
 	return m
 }
+//指定数据库连接
+func (m *Models) AppointDataBase(libraryName string) *Models {
+	if libraryName != "" {
+		m.LibraryName=libraryName
+	}
+	return m
+}
 //表名称
 func (m *Models) TableNames(name string) *Models{
 	m.TableName=fmt.Sprintf("%v%v%v",m.QuoteIdentifier,name,m.QuoteIdentifier)

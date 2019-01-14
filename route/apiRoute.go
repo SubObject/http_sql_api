@@ -9,4 +9,5 @@ import (
 //路由
 func InitRoute(m *mux.Router) {
 	m.HandleFunc("/",controller.Index()).Methods("GET")
+	m.HandleFunc("/system_admin",controller.SelectSystemAdmin()).Methods("GET")
 }
