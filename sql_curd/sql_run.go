@@ -9,10 +9,8 @@ import (
 	"http_sql_api/config"
 )
 
-//查询单一
-// func (m *Models) Select(kjs ...interface{}) (resultsSlice []map[string][]byte,resul []map[string]string, err error) {
+//查询
 func (m *Models) Select(receiveModels ...interface{}) (resultSlice []map[string]string, err error){
-// func (m *Models) Select(receiveModels ...interface{})  {
 	//var resultslices []map[string][]byte
 	
 
@@ -108,6 +106,16 @@ func uintToString(resultsVal []map[string][]byte) (resultsString []map[string]st
 	}
 	return resultsString,nil
 }
+
+//写入&更新
+func  (m *Models) Save(data interface{}) (resultSlice Models, err error) {
+	sql_str,err := m.saveAnalysis(data)
+	m.GroupStr=sql_str
+	return *m,nil
+}
+//单条写入
+func (m *Models) Insert(){}
+
 //初始化配置
 func (m *Models) InitModel() {
 	m.TableName = ""
@@ -126,4 +134,6 @@ func (m *Models) InitModel() {
 	m.LibraryName = ""
 	m.QuoteIdentifier="`"
 	m.ParamIdentifier=config.AppConfig.DataBaseType
+	m.DataKey=""
+	m.DataVal=make([]interface{},0)
 }

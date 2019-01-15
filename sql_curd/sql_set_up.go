@@ -22,6 +22,8 @@ type Models struct {
 	LibraryName				string						//指定使用数据库配置
 	QuoteIdentifier			string						//识别符
 	ParamIdentifier			string						//数据库顺式链接识别符
+	DataKey					string						//数据值
+	DataVal					interface{}					//数据值
 }
 
 type Setwhere struct {

@@ -3,7 +3,7 @@ package sql_curd
 import (
 	"strings"
 	"fmt"
-
+	"reflect"
 	"http_sql_api/config"
 
 	"database/sql"
@@ -381,4 +381,35 @@ func (m *Models) judgeSqlDb(runType string) (db string) {
 		db = fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8",config.MysqlConfig.DB_User,config.MysqlConfig.DB_Pwds,config.MysqlConfig.DB_Host,config.MysqlConfig.DB_Port,config.MysqlConfig.DB_Name)
 	}
 	return db
+}
+
+
+
+func (m *Models) saveAnalysis(data interface{}) (sqlstr string,err error) {
+	if m.TableName == "" {
+		m.TableName = getTableName(data)
+	}
+	results, err := scanStructIntoMap(data)
+	if err != nil {
+		return "扫描结构失败！该类型无法完成数据映射！",err
+	}
+	var keys []string
+	if m.Fieldes == "*" {
+		for key, _ := range results {
+			keys = append(keys, fmt.Sprintf("%v%v%v",m.QuoteIdentifier,key,m.QuoteIdentifier))
+		}
+		m.Fieldes = strings.Join(keys, ", ")
+	}
+	m.WhereInterface=results
+
+	id := results[m.PrimaryKey]
+	if id == nil {
+		return fmt.Sprintf("无法保存，因为在结构中找不到主键 %q ", m.PrimaryKey),err
+	}
+	if reflect.ValueOf(id).Int() == 0 {}else{
+		m.WhereStr = fmt.Sprintf("%v%v%v=%v", m.QuoteIdentifier, m.PrimaryKey, m.QuoteIdentifier,id)
+	}
+
+	m.choiceDatabase("w")
+	return "解析完成",nil
 }
