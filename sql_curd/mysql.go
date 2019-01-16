@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"http_sql_api/config"
+	"http_sql_api/outputformat"
 
 	"database/sql"
 	_"github.com/go-sql-driver/mysql"
@@ -349,7 +350,7 @@ func (m *Models) analysis() (sqlstr string) {
 			sqlstr = fmt.Sprintf("%v %v", sqlstr, m.OrderStr)
 		}
 		if m.PageSize > 0 {
-			sqlstr = fmt.Sprintf("%v LIMIT %v OFFSET %v", sqlstr, m.LimitInt, m.PageSize)
+			sqlstr = fmt.Sprintf("%v LIMIT %v , %v", sqlstr, m.LimitInt, m.PageSize)
 		} else if m.LimitInt > 0 {
 			sqlstr = fmt.Sprintf("%v LIMIT %v", sqlstr, m.LimitInt)
 		}
@@ -412,4 +413,33 @@ func (m *Models) saveAnalysis(data interface{}) (sqlstr string,err error) {
 
 	m.choiceDatabase("w")
 	return "解析完成",nil
+}
+//执行写去操作
+func (m *Models) writeRun(data map[string]interface{}) *Models {
+	var keys []string
+	var placeholders []string
+	var vals []interface{}
+	for key,val := range data{
+		keys = append(keys,fmt.Sprintf("%v%v%v",m.QuoteIdentifier,key,m.QuoteIdentifier))
+		placeholders = append(placeholders, "?")
+		m.ParamIteration++
+		if key == "id" && reflect.ValueOf(val).Int() == 0 {
+			gentor1, _ := outputformat.NewIDGenerator().SetWorkerId(100).Init()
+			gid, _ := gentor1.NextId()
+			vals = append(vals,gid)
+		}else{
+			vals = append(vals,val)
+		}
+		
+	}
+	sqlStr := fmt.Sprintf("INSERT INTO %v%v%v (%v) VALUES (%v)",
+	m.QuoteIdentifier,m.TableName,m.QuoteIdentifier,
+	strings.Join(keys, ", "),
+	strings.Join(placeholders, ", "))
+
+	m.SqlLink = sqlStr
+	m.DataKey = strings.Join(keys, ", ")
+	m.DataVal = vals
+	m.choiceDatabase("w")
+	return m
 }

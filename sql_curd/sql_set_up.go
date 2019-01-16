@@ -23,7 +23,10 @@ type Models struct {
 	QuoteIdentifier			string						//识别符
 	ParamIdentifier			string						//数据库顺式链接识别符
 	DataKey					string						//数据值
-	DataVal					interface{}					//数据值
+	DataVal					[]interface{}					//数据值
+	ParamIteration			int							//迭代使用
+	SqlLink					string						//sql语句
+	Id 						int64
 }
 
 type Setwhere struct {

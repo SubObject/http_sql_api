@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+	"database/sql"
 
 	"http_sql_api/config"
 )
@@ -29,7 +30,7 @@ func (m *Models) Select(receiveModels ...interface{}) (resultSlice []map[string]
 	sql_str := m.analysis()
 
 	query_ary, err := m.DB.Query(sql_str)
-
+	
 	if err != nil {
 		return nil,err
 	}
@@ -114,8 +115,46 @@ func  (m *Models) Save(data interface{}) (resultSlice Models, err error) {
 	return *m,nil
 }
 //单条写入
-func (m *Models) Insert(){}
+func (m *Models) Insert(data ...interface{}) (id Models , err error) {
+	defer m.InitModel()
+	if len(data) > 0 {
+		results, err := scanStructIntoMap(data[0])
+		if err != nil {
+			return *m,err
+		}
+		if m.TableName == "" {
+			m.TableName = getTableName(data[0])
+		}
+		m.writeRun(results)
+		exec,err :=m.ExecuteRun()
+		if err != nil {
+			return *m, err
+		}
 
+		id, err := exec.LastInsertId()
+
+		if err != nil {
+			return *m, err
+		}
+		m.Id=id
+		return *m,nil
+	}
+	return *m,nil
+}
+//执行语句
+func (m *Models)ExecuteRun() (sql.Result, error) {
+	rs, err := m.DB.Prepare(m.SqlLink)
+	if err != nil {
+		return nil, err
+	}
+	defer rs.Close()
+
+	res, err := rs.Exec(m.DataVal...)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
 //初始化配置
 func (m *Models) InitModel() {
 	m.TableName = ""
@@ -132,8 +171,10 @@ func (m *Models) InitModel() {
 	m.JoinStr = ""
 	m.WhereFrequency = 0
 	m.LibraryName = ""
-	m.QuoteIdentifier="`"
-	m.ParamIdentifier=config.AppConfig.DataBaseType
-	m.DataKey=""
-	m.DataVal=make([]interface{},0)
+	m.QuoteIdentifier = "`"
+	m.ParamIdentifier = config.AppConfig.DataBaseType
+	m.DataKey = ""
+	m.DataVal = make([]interface{},0)
+	m.ParamIteration= 0
+	m.SqlLink = ""
 }
