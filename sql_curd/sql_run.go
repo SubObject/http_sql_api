@@ -113,17 +113,9 @@ func  (m *Models) Save(data interface{}) (resultSlice Models, err error) {
 func (m *Models) Insert(data ...interface{}) (id Models , err error) {
 	defer m.InitModel()
 	if len(data) > 0 {
-		results, err := scanStructIntoMap(data[0])
-		if err != nil {
-			results, err = scanInterfacetoMap(data[0])
-			if err != nil {
-				return *m,errors.New("数据格式错误！不能识别输入的数据！")
-			}
+		if m.DataKey == "" {
+			m.Data(data[0])
 		}
-		if m.TableName == "" {
-			m.TableName = getTableName(data[0])
-		}
-		m.writeRun(results)
 		exec,err :=m.ExecuteRun()
 		if err != nil {
 			return *m, err
@@ -135,7 +127,22 @@ func (m *Models) Insert(data ...interface{}) (id Models , err error) {
 		m.Id=id
 		return *m,nil
 	}else{
-		return *m,errors.New("没有数据")
+		if m.TableName == "" {
+			return *m,errors.New("没有指定操作哪个数据表！")
+		}
+		if m.DataKey == "" {
+			return *m,errors.New("没有获取到要写入的数据！")
+		}
+		exec,err :=m.ExecuteRun()
+		if err != nil {
+			return *m, err
+		}
+		id, err := exec.LastInsertId()
+		if err != nil {
+			return *m, err
+		}
+		m.Id=id
+		return *m,nil
 	}
 	
 }

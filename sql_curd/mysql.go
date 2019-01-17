@@ -328,6 +328,23 @@ func (m *Models) Join(tablename string,condition string,method string) *Models {
 	m.WhereFrequency++
 	return m
 }
+//数据解析
+func (m *Models) Data(data interface{}) (*Models) {
+	results, err := scanStructIntoMap(data)
+	if err != nil {
+		results, err = scanInterfacetoMap(data)
+		if err != nil {
+			return m
+		}
+	}else{
+		if m.TableName == "" {
+			m.TableName = getTableName(data)
+		}
+	}
+	m.writeRun(results)
+	return m
+}
+
 //解析拼接sql语句
 func (m *Models) analysis() (sqlstr string) {
 	switch m.ParamIdentifier {

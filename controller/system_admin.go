@@ -71,9 +71,9 @@ func addAdminHandle(req *http.Request)  (prt outputformat.JsonOut)  {
 		prt.Msg="对不起，您两次输入的密码不一致！"
 		return prt
 	}
-	// gentor1, err := outputformat.NewIDGenerator().SetWorkerId(100).Init()
-	// gid, err := gentor1.NextId()
-	// userModel.Id = gid
+	gentor1, err := outputformat.NewIDGenerator().SetWorkerId(100).Init()
+	gid, err := gentor1.NextId()
+	userModel.Id = gid
 	userModel.UserName = username
 	userModel.Pwd = outputformat.Md5(pwd)
 	userModel.Creade = time.Now().Unix()
@@ -81,12 +81,21 @@ func addAdminHandle(req *http.Request)  (prt outputformat.JsonOut)  {
 	userModel.FullName = fullname
 	sql_model.BeginGo()
 	// cont, err := sql_model.Db().Save(&userModel)
-	cont, err := sql_model.Db().Insert(&userModel)
-
+	// cont, err := sql_model.Db().Insert(&userModel)
+	cont, err := sql_model.Db().Data(&userModel).Insert()
+	cont1, _ := sql_model.Db().TableNames("system_admin_copy").Data(&userModel).Insert()
+	if err != nil {
+		sql_model.RollbackGo()
+		prt.Code = 2002
+		prt.Msg = "添加失败！"
+		prt.ErrMsg=err
+		return prt
+	}
 	sql_model.CommitGo()
 
 	data := outputformat.MapOut()	
 	data["list"]=cont
+	data["list_two"]=cont1
 	prt.Code = 200
 	prt.Msg = "通讯成功！"
 	prt.Data=data
@@ -134,7 +143,8 @@ func addAdminHandleing(req *http.Request)  (prt outputformat.JsonOut)  {
 	addData["update"] = time.Now().Unix()
 	addData["fullname"] = fullname
 
-	cont, err := sql_model.Db().TableNames("system_admin_copy").Insert(addData)
+	// cont, err := sql_model.Db().TableNames("system_admin_copy").Insert(addData)
+	cont, err := sql_model.Db().TableNames("system_admin_copy").Data(addData).Insert()
 	if err != nil {
 		prt.Code = 2001
 		prt.Msg = "添加失败"
