@@ -11,4 +11,5 @@ func InitRoute(m *mux.Router) {
 	m.HandleFunc("/",controller.Index()).Methods("GET")
 	m.HandleFunc("/system_admin",controller.SelectSystemAdmin()).Methods("GET")
 	m.HandleFunc("/add_admin",controller.AddSystemAdmin()).Methods("POST")
+	m.HandleFunc("/add_admin_ing",controller.AddSystemAdmining()).Methods("POST")
 }

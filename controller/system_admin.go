@@ -75,13 +75,15 @@ func addAdminHandle(req *http.Request)  (prt outputformat.JsonOut)  {
 	// gid, err := gentor1.NextId()
 	// userModel.Id = gid
 	userModel.UserName = username
-	userModel.Pwd = outputformat.Md5("123456")
+	userModel.Pwd = outputformat.Md5(pwd)
 	userModel.Creade = time.Now().Unix()
 	userModel.UpDate = time.Now().Unix()
-	userModel.FullName = "何仁山"
-
+	userModel.FullName = fullname
+	sql_model.BeginGo()
 	// cont, err := sql_model.Db().Save(&userModel)
 	cont, err := sql_model.Db().Insert(&userModel)
+
+	sql_model.CommitGo()
 
 	data := outputformat.MapOut()	
 	data["list"]=cont
@@ -92,3 +94,59 @@ func addAdminHandle(req *http.Request)  (prt outputformat.JsonOut)  {
 	return prt
 }
 
+func addAdminHandleing(req *http.Request)  (prt outputformat.JsonOut)  {
+	
+
+	username := req.FormValue("username")
+	pwd := req.FormValue("pwd")
+	qrpwd := req.FormValue("qrpwd")
+	fullname := req.FormValue("fullname")
+	if username == "" {
+		prt.Code=1002
+		prt.Msg="对不起，请输入用户名！"
+		return prt
+	}
+	if pwd == "" {
+		prt.Code=1003
+		prt.Msg="对不起，请输入密码！"
+		return prt
+	}
+	if qrpwd == "" {
+		prt.Code=1004
+		prt.Msg="对不起，请确认密码输入！"
+		return prt
+	}
+	if fullname == "" {
+		prt.Code=1005
+		prt.Msg="对不起，请输入管理员姓名！"
+		return prt
+	}
+	if pwd != qrpwd {
+		prt.Code=1006
+		prt.Msg="对不起，您两次输入的密码不一致！"
+		return prt
+	}
+	
+	addData := make(map[string]interface{})
+	addData["username"] = username
+	addData["pwd"] = outputformat.Md5(pwd)
+	addData["creade"] = time.Now().Unix()
+	addData["update"] = time.Now().Unix()
+	addData["fullname"] = fullname
+
+	cont, err := sql_model.Db().TableNames("system_admin_copy").Insert(addData)
+	if err != nil {
+		prt.Code = 2001
+		prt.Msg = "添加失败"
+		prt.ErrMsg=err
+		return prt
+	}
+	data := outputformat.MapOut()	
+
+	data["list"] = cont
+	prt.Code = 200
+	prt.Msg = "通讯成功！"
+	prt.Data=data
+	prt.ErrMsg=err
+	return prt
+}

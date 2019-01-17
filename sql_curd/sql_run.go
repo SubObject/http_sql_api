@@ -1,28 +1,21 @@
 package sql_curd
 
 import (
-	// "fmt"
+	//"fmt"
 	"reflect"
 	"strconv"
 	"time"
+	"errors"
 	"database/sql"
 
 	"http_sql_api/config"
+
+	//"strings"
 )
 
 //查询
 func (m *Models) Select(receiveModels ...interface{}) (resultSlice []map[string]string, err error){
-	//var resultslices []map[string][]byte
 	
-
-	// sql_str := m.analysis()
-
-	// //db, err := m.DB.Query(sql_str)
-
-	// fmt.Println(sql_str);
-	// //defer m.DB.Close()
-	// defer m.InitModel()
-	//return resultSlice,nil
 	var resultslices []map[string][]byte
 
 	defer m.InitModel()
@@ -114,13 +107,18 @@ func  (m *Models) Save(data interface{}) (resultSlice Models, err error) {
 	m.GroupStr=sql_str
 	return *m,nil
 }
+
+
 //单条写入
 func (m *Models) Insert(data ...interface{}) (id Models , err error) {
 	defer m.InitModel()
 	if len(data) > 0 {
 		results, err := scanStructIntoMap(data[0])
 		if err != nil {
-			return *m,err
+			results, err = scanInterfacetoMap(data[0])
+			if err != nil {
+				return *m,errors.New("数据格式错误！不能识别输入的数据！")
+			}
 		}
 		if m.TableName == "" {
 			m.TableName = getTableName(data[0])
@@ -130,20 +128,24 @@ func (m *Models) Insert(data ...interface{}) (id Models , err error) {
 		if err != nil {
 			return *m, err
 		}
-
 		id, err := exec.LastInsertId()
-
 		if err != nil {
 			return *m, err
 		}
 		m.Id=id
 		return *m,nil
+	}else{
+		return *m,errors.New("没有数据")
 	}
-	return *m,nil
+	
 }
 //执行语句
 func (m *Models)ExecuteRun() (sql.Result, error) {
+	
 	rs, err := m.DB.Prepare(m.SqlLink)
+	if m.OpenStatus == 1{
+		rs, err = m.Affair.Prepare(m.SqlLink)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -153,8 +155,25 @@ func (m *Models)ExecuteRun() (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	
 	return res, nil
 }
+
+//启动事务
+func (m *Models) BeginGo() *Models {
+	m.OpenStatus=1
+	return m
+}
+//事务回滚
+func (m *Models) RollbackGo(){
+	m.Affair.Rollback()
+}
+//提交事务
+func (m *Models) CommitGo(){
+	m.Affair.Commit()
+}
+
+
 //初始化配置
 func (m *Models) InitModel() {
 	m.TableName = ""
@@ -177,4 +196,5 @@ func (m *Models) InitModel() {
 	m.DataVal = make([]interface{},0)
 	m.ParamIteration= 0
 	m.SqlLink = ""
+	m.OpenStatus = 0
 }

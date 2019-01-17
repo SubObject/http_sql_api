@@ -373,9 +373,14 @@ func (m *Models) choiceDatabase(runType string) *Models {
 	if err != nil {
 		return m
 	}
+	//defer db.Close()
 	m.DB=db
+	if m.OpenStatus == 1 {
+		m.Affair,_=db.Begin()
+	}
 	return m
 }
+
 
 func (m *Models) judgeSqlDb(runType string) (db string) {
 	if config.AppConfig.ReadWriteSeparation == false {
@@ -419,21 +424,34 @@ func (m *Models) writeRun(data map[string]interface{}) *Models {
 	var keys []string
 	var placeholders []string
 	var vals []interface{}
+	//set_id := 0
 	for key,val := range data{
 		keys = append(keys,fmt.Sprintf("%v%v%v",m.QuoteIdentifier,key,m.QuoteIdentifier))
 		placeholders = append(placeholders, "?")
 		m.ParamIteration++
-		if key == "id" && reflect.ValueOf(val).Int() == 0 {
+		if key == m.PrimaryKey && reflect.ValueOf(val).Int() == 0 {
 			gentor1, _ := outputformat.NewIDGenerator().SetWorkerId(100).Init()
 			gid, _ := gentor1.NextId()
 			vals = append(vals,gid)
 		}else{
 			vals = append(vals,val)
 		}
-		
 	}
-	sqlStr := fmt.Sprintf("INSERT INTO %v%v%v (%v) VALUES (%v)",
-	m.QuoteIdentifier,m.TableName,m.QuoteIdentifier,
+	// if set_id == 0 {
+	// 	gentor1, _ := outputformat.NewIDGenerator().SetWorkerId(100).Init()
+	// 	gid, _ := gentor1.NextId()
+	// 	vals = append(vals,gid)
+	// 	keys = append(keys,fmt.Sprintf("%v%v%v",m.QuoteIdentifier,m.PrimaryKey,m.QuoteIdentifier))
+	// 	placeholders = append(placeholders, "?")
+	// }
+	tablenameQuote := strings.Split(m.TableName,"`")
+
+	tablename := fmt.Sprintf("%v%v%v",m.QuoteIdentifier,m.TableName,m.QuoteIdentifier)
+	if len(tablenameQuote) == 3 {
+		tablename = m.TableName
+	}
+	sqlStr := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)",
+	tablename,
 	strings.Join(keys, ", "),
 	strings.Join(placeholders, ", "))
 

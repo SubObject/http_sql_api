@@ -26,7 +26,9 @@ type Models struct {
 	DataVal					[]interface{}					//数据值
 	ParamIteration			int							//迭代使用
 	SqlLink					string						//sql语句
-	Id 						int64
+	Id 						int64						
+	OpenStatus				int
+	Affair					*sql.Tx
 }
 
 type Setwhere struct {

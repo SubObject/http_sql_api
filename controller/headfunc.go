@@ -19,3 +19,10 @@ func AddSystemAdmin() http.HandlerFunc {
 		formatter.JSON(w,http.StatusOK,addAdminHandle(req))
 	}
 }
+
+func AddSystemAdmining() http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request){
+		formatter := render.New(render.Options{IndentJSON:true})
+		formatter.JSON(w,http.StatusOK,addAdminHandleing(req))
+	}
+}

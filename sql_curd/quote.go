@@ -133,3 +133,17 @@ func StructName(str interface{}) string {
 	}
 	return val.Name()
 }
+
+
+//扫描interface以映射
+func scanInterfacetoMap(object interface{}) (map[string]interface{}, error) {
+	mapdata := make(map[string]interface{})
+	if is_interface, ok := object.(map[string]interface{}); ok {
+		for key,val := range is_interface {
+			mapdata[key] =val
+		}
+		return mapdata,nil
+	}else{
+		return mapdata,errors.New("数据类型错误")
+	}
+}

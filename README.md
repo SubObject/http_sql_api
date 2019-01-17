@@ -163,7 +163,7 @@
 
 #### 在find和select方法之前可以使用所有的链式操作（参考链式操作章节）方法。
 
-## 添加数据
+> # 2、添加数据
 
 ### 添加一条数据
 
@@ -203,9 +203,9 @@
 	cont1, err1 := sql_model.Db.TableNames("system_admin").Data(add).Insert(add)
 ~~~
 
-## 更新数据
-## 删除数据
-## 链式操作
+> # 3、更新数据
+> # 4、删除数据
+> # 5、链式操作
 
 ### 数据库提供的链式操作方法，可以有效的提高数据存取的代码清晰度和开发效率，并且支持所有的CURD操作（原生查询不支持链式操作）。
 
@@ -357,4 +357,41 @@
 
 ~~~
 	SELECT FROM * system_admin sq LEFT JOIN count c ON sq.id = c.id WHERE `username` LIKE admnin GROUP BY creade ORDER BY id DESC, creade DESC LIMIT 0,20
+~~~
+
+> # 6、事务操作
+
+####  使用事务处理的话，需要数据库引擎支持事务处理。比如 MySQL 的 MyISAM 不支持事务处理，需要使用 InnoDB 引擎。 ####
+
+使用方法
+
+~~~
+	//开启事务
+	sql_model.BeginGo()
+	
+	//执行语句
+	cont, err := sql_model.Db().Insert(&userModel)
+	
+	if err != nil {
+		//回滚
+		sql_model.RollbackGo()
+	}
+	//执行
+	sql_model.CommitGo()
+~~~
+
+#### <font color="#FF0000">*</font> 注意在事务操作的时候，确保你的数据库连接使用的是同一个。 ####
+####  <font color="#FF0000">*</font> 要确保你的数据表引擎为InnoDB，并且开启XA事务支持。####
+
+## 三、表切片
+
+~~~
+	type SystemAdmin struct {
+		Id			int64		`json:"id" bson:"id"`			//ID
+		UserName	string		`json:"username" bson:"username"`	//用户名
+		Pwd			string		`json:"pwd" bson:"pwd"`		//密码
+		Creade		int64		`json:"creade" bson:"creade"`		//创建时间
+		UpDate		int64		`json:"update" bson:"update"`		//更新时间
+		FullName	string		`json:"fullname" bson:"fullname"`	//姓名
+	}
 ~~~
