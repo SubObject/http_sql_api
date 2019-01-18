@@ -146,13 +146,31 @@ func (m *Models) Where(wheStr interface{}) *Models {
 		}
 	default:
 	}
-	if len(wheAry) > 1{
-		m.WhereStr=strings.Join(wheAry," AND ")
-	}else {
-		if(wheAry[0] != ""){
-			m.WhereStr= wheAry[0]
+	if m.WhereStr == "" {
+		if len(wheAry) > 1{
+			m.WhereStr=strings.Join(wheAry," AND ")
+		}else {
+			if(wheAry[0] != ""){
+				m.WhereStr= wheAry[0]
+			}
+		}
+	}else{
+		wheStr := strings.Split(m.WhereStr,"(")
+		var wheStrVal string
+		if len(wheAry) > 1{
+			wheStrVal=strings.Join(wheAry," AND ")
+		}else {
+			if(wheAry[0] != ""){
+				wheStrVal = wheAry[0]
+			}
+		}
+		if len(wheStr) > 1 {
+			m.WhereStr = fmt.Sprintf("( %v ) AND ( %v )",m.WhereStr ,wheStrVal)
+		}else{
+			m.WhereStr = fmt.Sprintf("%v AND %v",m.WhereStr ,wheStrVal)
 		}
 	}
+	
 	return m
 }
 //过滤条件
@@ -442,39 +460,65 @@ func (m *Models) writeRun(data map[string]interface{}) *Models {
 	var placeholders []string
 	var vals []interface{}
 	//set_id := 0
-	for key,val := range data{
-		keys = append(keys,fmt.Sprintf("%v%v%v",m.QuoteIdentifier,key,m.QuoteIdentifier))
-		placeholders = append(placeholders, "?")
-		m.ParamIteration++
-		if key == m.PrimaryKey && reflect.ValueOf(val).Int() == 0 {
-			gentor1, _ := outputformat.NewIDGenerator().SetWorkerId(100).Init()
-			gid, _ := gentor1.NextId()
-			vals = append(vals,gid)
-		}else{
-			vals = append(vals,val)
-		}
-	}
-	// if set_id == 0 {
-	// 	gentor1, _ := outputformat.NewIDGenerator().SetWorkerId(100).Init()
-	// 	gid, _ := gentor1.NextId()
-	// 	vals = append(vals,gid)
-	// 	keys = append(keys,fmt.Sprintf("%v%v%v",m.QuoteIdentifier,m.PrimaryKey,m.QuoteIdentifier))
-	// 	placeholders = append(placeholders, "?")
-	// }
+	
 	tablenameQuote := strings.Split(m.TableName,"`")
 
 	tablename := fmt.Sprintf("%v%v%v",m.QuoteIdentifier,m.TableName,m.QuoteIdentifier)
 	if len(tablenameQuote) == 3 {
 		tablename = m.TableName
 	}
-	sqlStr := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)",
-	tablename,
-	strings.Join(keys, ", "),
-	strings.Join(placeholders, ", "))
+	var sqlStr string
+	switch m.WriteEdit {
+	case 2:
+		for key, val := range data {
+			keys = append(keys,fmt.Sprintf("%v%v%v",m.QuoteIdentifier,key,m.QuoteIdentifier))
+			placeholders = append(placeholders, fmt.Sprintf("%v%v%v = ?", m.QuoteIdentifier, key, m.QuoteIdentifier))
+
+			vals = append(vals, val)
+			m.ParamIteration++
+		}
+		vals = append(vals, m.DataVal...)
+		sqlStr = fmt.Sprintf("UPDATE %v SET %v WHERE %v",
+		tablename,
+		strings.Join(placeholders, ", "),
+		m.WhereStr)
+		break
+	default:
+		for key,val := range data{
+			keys = append(keys,fmt.Sprintf("%v%v%v",m.QuoteIdentifier,key,m.QuoteIdentifier))
+			placeholders = append(placeholders, "?")
+			m.ParamIteration++
+			if key == m.PrimaryKey && reflect.ValueOf(val).Int() == 0 {
+				gentor1, _ := outputformat.NewIDGenerator().SetWorkerId(100).Init()
+				gid, _ := gentor1.NextId()
+				vals = append(vals,gid)
+			}else{
+				vals = append(vals,val)
+			}
+		}
+		sqlStr = fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)",
+		tablename,
+		strings.Join(keys, ", "),
+		strings.Join(placeholders, ", "))
+	}
+	
 
 	m.SqlLink = sqlStr
 	m.DataKey = strings.Join(keys, ", ")
 	m.DataVal = vals
+	m.choiceDatabase("w")
+	return m
+}
+//删除语句
+func (m *Models) deleteSqlStr() *Models {
+	tablenameQuote := strings.Split(m.TableName,"`")
+
+	tablename := fmt.Sprintf("%v%v%v",m.QuoteIdentifier,m.TableName,m.QuoteIdentifier)
+	if len(tablenameQuote) == 3 {
+		tablename = m.TableName
+	}
+	sqlStr := fmt.Sprintf("DELETE FROM %v WHERE %v",tablename,m.WhereStr)
+	m.SqlLink = sqlStr
 	m.choiceDatabase("w")
 	return m
 }

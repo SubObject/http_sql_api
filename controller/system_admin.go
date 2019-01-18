@@ -4,6 +4,7 @@ import (
 	//"fmt"
 	"net/http"
 	"time"
+	"strconv"
 
 	"http_sql_api/outputformat"
 	"http_sql_api/sql_curd"
@@ -159,4 +160,89 @@ func addAdminHandleing(req *http.Request)  (prt outputformat.JsonOut)  {
 	prt.Data=data
 	prt.ErrMsg=err
 	return prt
+}
+
+//更新数据
+func updateAdminRun(req *http.Request)  (prt outputformat.JsonOut)  {
+	id := req.FormValue("id")
+	fullname := req.FormValue("fullname")
+	if id == "" {
+		prt.Code=1002
+		prt.Msg="对不起，请输入用户ID！"
+		return prt
+	}
+	if fullname == "" {
+		prt.Code=1005
+		prt.Msg="对不起，请输入管理员姓名！"
+		return prt
+	}
+	//var userModel models.SystemAdmin
+
+	id_int64, _ := strconv.ParseInt(id, 10, 64)    
+
+	// userModel.Id = id_int64
+	// userModel.UpDate = time.Now().Unix()
+	// userModel.FullName = fullname
+
+	// editSystemAdmin, err := sql_model.Db().UpDate(&userModel)
+
+	Whe_ary := sql_curd.SetMapOut()
+	Whe_ary["id"]=sql_curd.Setwhere{"=",id_int64}
+
+	addData := make(map[string]interface{})
+	addData["update"] = time.Now().Unix()
+	addData["fullname"] = fullname
+
+	editSystemAdmin, err := sql_model.Db().TableNames("system_admin").Where(Whe_ary).UpDate(addData)
+
+
+	if err != nil {
+		prt.Code = 2001
+		prt.Msg = "添加失败"
+		prt.ErrMsg=err
+		return prt
+	}
+	data := outputformat.MapOut()	
+
+	data["list"] = editSystemAdmin
+	prt.Code = 200
+	prt.Msg = "编辑成功"
+	prt.Data=data
+	prt.ErrMsg=err
+	return
+}
+
+//删除操作
+func delSystemAdmin(req *http.Request)  (prt outputformat.JsonOut)  {
+	id := req.FormValue("id")
+	if id == "" {
+		prt.Code=1002
+		prt.Msg="对不起，请输入用户ID！"
+		return prt
+	}
+	id_int64, _ := strconv.ParseInt(id, 10, 64)    
+	Whe_ary := sql_curd.SetMapOut()
+	Whe_ary["id"]=sql_curd.Setwhere{"=",id_int64}
+
+	Whe_ary_2 := sql_curd.SetMapOut()
+	Whe_ary_2["id"]=sql_curd.Setwhere{"=",id_int64}
+
+	//delSystemAdmin, err := sql_model.Db().TableNames("system_admin").Where(Whe_ary).Delete()
+
+	delSystemAdmin, err := sql_model.Db().TableNames("system_admin").Where(Whe_ary).Where(Whe_ary_2).Save(Whe_ary)
+
+
+	if err != nil {
+		prt.Code = 2001
+		prt.Msg = "添加失败"
+		prt.ErrMsg=err
+		return prt
+	}
+	data := outputformat.MapOut()
+	data["list"] = delSystemAdmin
+	prt.Code = 200
+	prt.Msg = "编辑成功"
+	prt.Data=data
+	prt.ErrMsg=err
+	return
 }

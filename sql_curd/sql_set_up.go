@@ -26,8 +26,9 @@ type Models struct {
 	DataVal					[]interface{}					//数据值
 	ParamIteration			int							//迭代使用
 	SqlLink					string						//sql语句
-	Id 						int64						
+	WriteEdit 				int						
 	OpenStatus				int
+	ID int64
 	Affair					*sql.Tx
 }
 

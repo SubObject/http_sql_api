@@ -110,41 +110,82 @@ func  (m *Models) Save(data interface{}) (resultSlice Models, err error) {
 
 
 //单条写入
-func (m *Models) Insert(data ...interface{}) (id Models , err error) {
+func (m *Models) Insert(data ...interface{}) (id int64 , err error) {
 	defer m.InitModel()
+	m.WriteEdit = 1
 	if len(data) > 0 {
 		if m.DataKey == "" {
 			m.Data(data[0])
 		}
 		exec,err :=m.ExecuteRun()
 		if err != nil {
-			return *m, err
+			return -1, err
 		}
 		id, err := exec.LastInsertId()
 		if err != nil {
-			return *m, err
+			return -1, err
 		}
-		m.Id=id
-		return *m,nil
+		//m.Id=id
+		defer m.DB.Close()
+		return id,nil
 	}else{
 		if m.TableName == "" {
-			return *m,errors.New("没有指定操作哪个数据表！")
+			return -1,errors.New("没有指定操作哪个数据表！")
 		}
 		if m.DataKey == "" {
-			return *m,errors.New("没有获取到要写入的数据！")
+			return -1,errors.New("没有获取到要写入的数据！")
 		}
 		exec,err :=m.ExecuteRun()
 		if err != nil {
-			return *m, err
+			return -1, err
 		}
 		id, err := exec.LastInsertId()
 		if err != nil {
-			return *m, err
+			return -1, err
 		}
-		m.Id=id
-		return *m,nil
+		//m.Id=id
+		defer m.DB.Close()
+		return id,nil
 	}
 	
+}
+//更新  
+func (m *Models) UpDate(data ...interface{}) (int64,error){
+	
+	//defer m.InitModel()
+	m.WriteEdit = 2
+	if len(data) > 0 {
+		if m.DataKey == "" {
+			m.Data(data[0])
+		}
+	}
+	exec,err :=m.ExecuteRun()
+	if err != nil {
+		return -1, err
+	}
+	id, err := exec.RowsAffected()
+
+	if err != nil {
+		return -1, err
+	}
+	defer m.DB.Close()
+	return id,nil
+}
+//删除
+func (m *Models) Delete() (int64,error) {
+	m.deleteSqlStr()
+	exec,err :=m.ExecuteRun()
+	if err != nil {
+		return -1, err
+	}
+	//return m,nil
+	deleteid, err := exec.RowsAffected()
+
+	if err != nil {
+		return -1, err
+	}
+	defer m.DB.Close()
+	return deleteid, nil
 }
 //执行语句
 func (m *Models)ExecuteRun() (sql.Result, error) {
@@ -181,6 +222,10 @@ func (m *Models) CommitGo(){
 }
 
 
+
+
+
+
 //初始化配置
 func (m *Models) InitModel() {
 	m.TableName = ""
@@ -204,4 +249,5 @@ func (m *Models) InitModel() {
 	m.ParamIteration= 0
 	m.SqlLink = ""
 	m.OpenStatus = 0
+	m.WriteEdit = 1
 }
