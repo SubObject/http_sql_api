@@ -204,7 +204,48 @@
 ~~~
 
 > # 3、更新数据
+
+### 更新一条数据
+
+使用 Db 的 UpDate 方法向数据库提交数据
+
+~~~
+	Whe_ary := sql_curd.SetMapOut()
+	Whe_ary["id"]=sql_curd.Setwhere{"=",id_int64}
+
+	addData := make(map[string]interface{})
+	addData["update"] = time.Now().Unix()
+	addData["fullname"] = fullname
+
+	editSystemAdmin, err := sql_model.Db().TableNames("system_admin").Where(Whe_ary).UpDate(addData)
+~~~
+
+最终生成的SQL语句类似于：
+
+~~~
+	UPDATE `system_admin` SET `fullname` = "您修改后的数据" WHERE `id` = 1
+~~~
+
 > # 4、删除数据
+
+### 删除一条数据
+
+使用 Db 的 Delete 方法向数据库提交数据
+
+~~~
+	id_int64, _ := strconv.ParseInt(id, 10, 64)    
+	Whe_ary := sql_curd.SetMapOut()
+	Whe_ary["id"]=sql_curd.Setwhere{"=",id_int64}
+
+	delSystemAdmin, err := sql_model.Db().TableNames("system_admin").Where(Whe_ary).Delete()
+~~~
+
+最终生成的SQL语句类似于：
+
+~~~
+	DELETE FROM `system_admin` WHERE `id` = 1
+~~~
+
 > # 5、链式操作
 
 ### 数据库提供的链式操作方法，可以有效的提高数据存取的代码清晰度和开发效率，并且支持所有的CURD操作（原生查询不支持链式操作）。
