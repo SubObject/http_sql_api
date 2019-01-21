@@ -12,7 +12,7 @@ import (
 
 	//"strings"
 )
-
+//单一查询
 //查询
 func (m *Models) Select(receiveModels ...interface{}) (resultSlice []map[string]string, err error){
 	
