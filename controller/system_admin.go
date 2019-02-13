@@ -20,18 +20,36 @@ func selectSystemAdmin(req *http.Request)  (prt outputformat.JsonOut)  {
 	// Whe_ary["username"]=sql_curd.Setwhere{"like",username}
 
 	ord_ary :=	sql_curd.SetMapOut()
-	ord_ary["id"]="desc"
+	ord_ary["id"]="asc"
 	ord_ary["creade"]="desc"
 
 	
-	list, err :=sql_model.Db().TableNames("system_admin").Alias("sq").Field("id,pwd,fullname").OrderBy(ord_ary).Limit(0,20).Select()
-	var adminMdel models.SystemAdmin
-	listes, err :=sql_model.Db().OrderBy(ord_ary).Limit(0,20).Select(adminMdel)
+	// list, err :=sql_model.Db().TableNames("system_admin").Alias("sq").Field("id,pwd,fullname").OrderBy(ord_ary).Limit(0,20).Select()
+	// var adminMdel models.SystemAdmin
+	// listes, err :=sql_model.Db().OrderBy(ord_ary).Limit(0,20).Select(adminMdel)
+
+	// var adminMdeles models.SystemAdminCopy
+	// listes_kj, err :=sql_model.Db().OrderBy(ord_ary).Limit(0,20).Paginate(2,2,adminMdeles)
+	id := "123456789"
+	id_int64, _ := strconv.ParseInt(id, 10, 64)    
+	Whe_ary := sql_curd.SetMapOut()
+	Whe_ary["id"]=sql_curd.Setwhere{"=",id_int64}
+	Whe_ary["id_es"]=sql_curd.Setwhere{"=",id_int64}
+
+	id2 := "987456321"
+	id_int642, _ := strconv.ParseInt(id2, 10, 64)   
+	Whe_ary_2 := sql_curd.SetMapOut()
+	Whe_ary_2["id_OR"]=sql_curd.Setwhere{"=",id_int642}
+	Whe_ary_2["id_ors"]=sql_curd.Setwhere{"=",id_int642}
+
+	list_ing, err := sql_model.Db().TableNames("system_admin").Alias("sq").Field("id,pwd,fullname").Where(Whe_ary_2,"OR").Where(Whe_ary,"",1).OrderBy(ord_ary).Limit(0,20).Selecting()
 
 	data := outputformat.MapOut()	
 	
-	data["list"]=list
-	data["listes"]=listes
+	// data["list"]=list
+	// data["listes"]=listes
+	// data["listes_kj"]=listes_kj
+	data["list_ing"]=list_ing
 
 	
 	prt.Code = 200

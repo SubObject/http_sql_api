@@ -104,7 +104,7 @@ func  (m *Models)judgeAliasName(val string) string {
 	return val
 }
 //查询条件
-func (m *Models) Where(wheStr interface{}) *Models {
+func (m *Models) Where(wheStr interface{},exp ...interface{}) *Models {
 	wheAry := []string{}
 	switch wheStr	:= wheStr.(type) {
 	case string:
@@ -113,61 +113,116 @@ func (m *Models) Where(wheStr interface{}) *Models {
 		wheAry = append(wheAry,fmt.Sprintf("%v%v%v = %v",m.QuoteIdentifier,m.PrimaryKey,m.QuoteIdentifier,wheStr))
 	case map[string]interface{}:
 		for key, val := range wheStr {
+			if m.AliasName != "" {
+				field_ary_dian := strings.Split(key,".")
+				if len(field_ary_dian) != 2 {
+					field_ary_d := strings.Split(key,"`")
+					if len(field_ary_d) == 3 {
+						key = fmt.Sprintf("%v.%v", m.AliasName, key)
+					}else{
+						for i:=0; i<len(field_ary_d); i++ {
+							if field_ary_d[i] != "`" &&  field_ary_d[i] != "" {
+								field_ary_str := fmt.Sprintf("`%v`",field_ary_d[i])
+								key = fmt.Sprintf("%v.%v", m.AliasName, field_ary_str)
+							}
+						}
+					}
+				}else{
+					field_ary_zhi := strings.Split(field_ary_dian[1],"`")
+					if len(field_ary_zhi) != 3 {
+						for i:=0; i<len(field_ary_zhi); i++ {
+							if field_ary_zhi[i] != "`" &&  field_ary_zhi[i] != "" {
+								field_ary_str := fmt.Sprintf("`%v`",field_ary_zhi[i])
+								if len(field_ary_dian[0]) != 0 {
+									key=fmt.Sprintf("%v.%v",field_ary_dian[0],field_ary_str)
+								}else{
+									key = fmt.Sprintf("%v.%v", m.AliasName, field_ary_zhi[i])
+								}
+								
+							}
+						}
+					}
+				}
+			}
 			switch value := val.(type) {
 				case string:
-					wheAry = append(wheAry,fmt.Sprintf("%v%v%v = '%v'", m.QuoteIdentifier, key, m.QuoteIdentifier, value))
+					wheAry = append(wheAry,fmt.Sprintf("%v = '%v'",key, value))
 				case int:
-					wheAry = append(wheAry,fmt.Sprintf("%v%v%v = %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value))
+					wheAry = append(wheAry,fmt.Sprintf("%v = %v",key, value))
 				case int8:
-					wheAry = append(wheAry,fmt.Sprintf("%v%v%v = %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value))
+					wheAry = append(wheAry,fmt.Sprintf("%v = %v",key, value))
 				case int16:
-					wheAry = append(wheAry,fmt.Sprintf("%v%v%v = %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value))
+					wheAry = append(wheAry,fmt.Sprintf("%v = %v",key, value))
 				case int32:
-					wheAry = append(wheAry,fmt.Sprintf("%v%v%v = %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value))
+					wheAry = append(wheAry,fmt.Sprintf("%v = %v",key, value))
 				case int64:
-					wheAry = append(wheAry,fmt.Sprintf("%v%v%v = %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value))
+					wheAry = append(wheAry,fmt.Sprintf("%v = %v",key, value))
 				case Setwhere:
 					switch valStr := value.Result.(type) {
 						case int:
-							wheAry = append(wheAry,fmt.Sprintf("%v%v%v %v %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value.Equation,valStr))
+							wheAry = append(wheAry,fmt.Sprintf("%v %v %v",key, value.Equation,valStr))
 						case int8:
-							wheAry = append(wheAry,fmt.Sprintf("%v%v%v %v %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value.Equation,valStr))
+							wheAry = append(wheAry,fmt.Sprintf("%v %v %v",key, value.Equation,valStr))
 						case int16:
-							wheAry = append(wheAry,fmt.Sprintf("%v%v%v %v %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value.Equation,valStr))
+							wheAry = append(wheAry,fmt.Sprintf("%v %v %v",key, value.Equation,valStr))
 						case int32:
-							wheAry = append(wheAry,fmt.Sprintf("%v%v%v %v %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value.Equation,valStr))
+							wheAry = append(wheAry,fmt.Sprintf("%v %v %v",key, value.Equation,valStr))
 						case int64:
-							wheAry = append(wheAry,fmt.Sprintf("%v%v%v %v %v", m.QuoteIdentifier, key, m.QuoteIdentifier, value.Equation,valStr))
+							wheAry = append(wheAry,fmt.Sprintf("%v %v %v",key, value.Equation,valStr))
 						default:
-							wheAry = append(wheAry,fmt.Sprintf("%v%v%v %v '%v'", m.QuoteIdentifier, key, m.QuoteIdentifier, value.Equation,valStr))
+							wheAry = append(wheAry,fmt.Sprintf("%v %v '%v'",key, value.Equation,valStr))
 					}
 				default:
 			}
 		}
 	default:
 	}
+	setExp := " AND "
+	if len(exp) > 0 {
+		setExp = chuan_hao(exp[0])
+		
+	}
+	
 	if m.WhereStr == "" {
+		wheStr := strings.Split(m.WhereStr,"(")
+		var wheStrVal string
 		if len(wheAry) > 1{
-			m.WhereStr=strings.Join(wheAry," AND ")
+			wheStrVal=strings.Join(wheAry,setExp)
 		}else {
 			if(wheAry[0] != ""){
-				m.WhereStr= wheAry[0]
+				wheStrVal= wheAry[0]
 			}
+		}
+		
+		if len(wheStr) > 1 {
+			m.WhereStr = fmt.Sprintf("( %v ) ",wheStrVal)
+		}else{
+			if len(exp) > 1 && judgeBrackets(exp[1]) {
+				m.WhereStr = fmt.Sprintf("( %v )",wheStrVal)
+			}else{
+				m.WhereStr = fmt.Sprintf("%v",wheStrVal)
+			}
+			
 		}
 	}else{
 		wheStr := strings.Split(m.WhereStr,"(")
 		var wheStrVal string
 		if len(wheAry) > 1{
-			wheStrVal=strings.Join(wheAry," AND ")
+			wheStrVal=strings.Join(wheAry,setExp)
 		}else {
 			if(wheAry[0] != ""){
 				wheStrVal = wheAry[0]
 			}
 		}
 		if len(wheStr) > 1 {
-			m.WhereStr = fmt.Sprintf("( %v ) AND ( %v )",m.WhereStr ,wheStrVal)
+			m.WhereStr = fmt.Sprintf(" %v  %v ( %v ) ",m.WhereStr, setExp ,wheStrVal)
 		}else{
-			m.WhereStr = fmt.Sprintf("%v AND %v",m.WhereStr ,wheStrVal)
+			if len(exp) > 1 && judgeBrackets(exp[1]) {
+				m.WhereStr = fmt.Sprintf("( %v ) %v ( %v )",m.WhereStr, setExp ,wheStrVal)
+			}else{
+				m.WhereStr = fmt.Sprintf("%v %v %v ",m.WhereStr, setExp ,wheStrVal)
+			}
+			
 		}
 	}
 	
@@ -547,4 +602,27 @@ func (m *Models) deleteSqlStr() *Models {
 	m.SqlLink = sqlStr
 	m.choiceDatabase("w")
 	return m
+}
+//判断是AND还是OR
+func chuan_hao(val interface{}) string {
+	switch value	:= val.(type) {
+	case string:
+		if value == "" { value = " AND "}
+		return fmt.Sprintf(" %v ",value)
+	default:
+		return " AND "
+	}
+	//return 
+}
+//是否强制加()区分查询条件
+func judgeBrackets(val interface{}) bool {
+	switch value	:= val.(type) {
+	case int:
+		if value == 1 {
+			return true
+		}
+		return false
+	default:
+		return false
+	}
 }
