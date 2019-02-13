@@ -13,12 +13,108 @@ import (
 	//"strings"
 )
 //单一查询
+// func (m *Models) Find(receiveModels ...interface{}) (resultSlice []map[string]string, err error){
+func (m *Models) Find(receiveModels ...interface{}) (resultSlice map[string]string, err error){
+// func (m *Models) Find(receiveModels ...interface{}) (resultSlice *Models, err error){
+// func (m *Models) Find(receiveModels ...interface{}) (resultSlice string, err error){
+	defer m.InitModel()
+
+	var resultslices []map[string][]byte
+
+	m.LimitInt=1
+	m.PageSize=0
+
+	if len(receiveModels) > 0 {
+		if m.DataKey == "" {
+			m.Dataes(receiveModels[0])
+		}
+	}
+
+	sql_str := m.analysis()
+	
+	query_ary, err := m.DB.Query(sql_str)
+	if err != nil {
+		return nil,err
+	}
+	defer query_ary.Close()
+
+	fields, err := query_ary.Columns()
+	if err != nil {
+		return nil,err
+	}
+	for query_ary.Next() {
+		result := make(map[string][]byte)
+		var result_arys []interface{}
+		for i := 0; i < len(fields); i++ {
+			var fields_ary interface{}
+			result_arys = append(result_arys,&fields_ary)
+		}
+		if err := query_ary.Scan(result_arys...); err != nil {
+			return nil,err
+		}
+
+		for j, key := range fields {
+			res_val := reflect.Indirect(reflect.ValueOf(result_arys[j]))
+			if res_val.Interface() == nil {
+				continue
+			}
+			val_type := reflect.TypeOf(res_val.Interface())
+			val_cont := reflect.ValueOf(res_val.Interface())
+			var str_val string
+			switch val_type.Kind() {
+				case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+					str_val	= strconv.FormatInt(val_cont.Int(),20)
+					result[key] = []byte(str_val)
+				case reflect.Float32, reflect.Float64:
+					str_val = strconv.FormatFloat(val_cont.Float(),'f',-1,64)
+					result[key] = []byte(str_val)
+				case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+					str_val = strconv.FormatUint(val_cont.Uint(),20)
+					result[key] = []byte(str_val)
+				case reflect.Slice:
+					if val_type.Elem().Kind() == reflect.Uint8{
+						result[key] = res_val.Interface().([]byte)
+					}
+				case reflect.String:
+					str_val = val_cont.String()
+					result[key] = []byte(str_val)
+				case reflect.Struct:
+					str_val = res_val.Interface().(time.Time).Format("1970-1-1 08:00:00.000")
+					result[key] = []byte(str_val)
+				case reflect.Bool:
+					if val_cont.Bool() {
+						result[key] = []byte("1")
+					}else{
+						result[key] = []byte("0")
+					}
+
+			}
+		}
+		resultslices = append(resultslices,result)
+	}
+	defer m.DB.Close()
+	var outPutCont []map[string]string
+	outPutCont, err = uintToString(resultslices)
+	if len(outPutCont) < 1 {
+		return nil,err
+	}
+	resultSlice = outPutCont[0]
+	return resultSlice,nil
+}
+
 //查询
 func (m *Models) Select(receiveModels ...interface{}) (resultSlice []map[string]string, err error){
 	
 	var resultslices []map[string][]byte
 
 	defer m.InitModel()
+
+	if len(receiveModels) > 0 {
+		if m.DataKey == "" {
+			m.Dataes(receiveModels[0])
+		}
+	}
+
 
 	sql_str := m.analysis()
 

@@ -14,4 +14,5 @@ func InitRoute(m *mux.Router) {
 	m.HandleFunc("/add_admin_ing",controller.AddSystemAdmining()).Methods("POST")
 	m.HandleFunc("/edit_admin_ing",controller.UpdateAdmin()).Methods("POST")
 	m.HandleFunc("/del_admin_ing",controller.DelDataAdmin()).Methods("POST")
+	m.HandleFunc("/get_admin_cont",controller.GetSystemAdminCont()).Methods("POST")
 }

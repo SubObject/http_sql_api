@@ -42,3 +42,11 @@ func DelDataAdmin() http.HandlerFunc {
 		formatter.JSON(w,http.StatusOK,delSystemAdmin(req))
 	}
 }
+
+//获取管理员详情
+func GetSystemAdminCont() http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request){
+		formatter := render.New(render.Options{IndentJSON:true})
+		formatter.JSON(w,http.StatusOK,getSystemAdminCont(req))
+	}
+}

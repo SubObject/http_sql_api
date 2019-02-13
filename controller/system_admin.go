@@ -24,11 +24,14 @@ func selectSystemAdmin(req *http.Request)  (prt outputformat.JsonOut)  {
 	ord_ary["creade"]="desc"
 
 	
-	list, err :=sql_model.Db().TableNames("system_admin").Alias("sq").Field("*").OrderBy(ord_ary).Limit(0,20).Select()
+	list, err :=sql_model.Db().TableNames("system_admin").Alias("sq").Field("id,pwd,fullname").OrderBy(ord_ary).Limit(0,20).Select()
+	var adminMdel models.SystemAdmin
+	listes, err :=sql_model.Db().OrderBy(ord_ary).Limit(0,20).Select(adminMdel)
 
 	data := outputformat.MapOut()	
 	
 	data["list"]=list
+	data["listes"]=listes
 
 	
 	prt.Code = 200
@@ -245,4 +248,36 @@ func delSystemAdmin(req *http.Request)  (prt outputformat.JsonOut)  {
 	prt.Data=data
 	prt.ErrMsg=err
 	return
+}
+
+//查询单一数据
+func getSystemAdminCont(req *http.Request)  (prt outputformat.JsonOut)  {
+	id := req.FormValue("id")
+	if id == "" {
+		prt.Code = 2002
+		prt.Msg = "没有获取到管理员ID"
+		return prt
+	}
+	id_int64, _ := strconv.ParseInt(id, 10, 64)    
+	Whe_ary := sql_curd.SetMapOut()
+	Whe_ary["id"]=sql_curd.Setwhere{"=",id_int64}
+	list, err := sql_model.Db().TableNames("system_admin").Field("id,username,pwd,fullname").Where(Whe_ary).Find()
+
+
+	var systemAdmin models.SystemAdmin
+	list_es, err := sql_model.Db().TableNames("system_admin").Where(Whe_ary).Find(systemAdmin)
+	list_ing, err := sql_model.Db().Where(Whe_ary).Find(systemAdmin)
+
+
+
+	data := outputformat.MapOut()
+	data["cont"]=list
+	data["cont_es"]=list_es
+	data["list_ing"]=list_ing
+
+	prt.Code = 200
+	prt.Msg = "处理完成"
+	prt.Data=data
+	prt.ErrMsg=err
+	return prt
 }

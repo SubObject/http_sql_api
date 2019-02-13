@@ -362,7 +362,33 @@ func (m *Models) Data(data interface{}) (*Models) {
 	m.writeRun(results)
 	return m
 }
-
+//模型拆分
+func (m *Models) Dataes(data interface{}) (*Models){
+	results, err := scanStructIntoMap(data)
+	if err != nil {
+		results, err = scanInterfacetoMap(data)
+		if err != nil {
+			return m
+		}
+	}else{
+		if m.TableName == "" {
+			m.TableName = getTableName(data)
+		}
+	}
+	var tablesKey string
+	if len(results) > 0 {
+		for key, _ := range results{
+			if tablesKey != "" {
+				tablesKey = fmt.Sprintf("%v,`%v`",tablesKey ,key)
+			}else{
+				tablesKey = fmt.Sprintf("`%v`",key)
+			}
+		}
+	}
+	m.Fieldes = tablesKey
+	m.WhereInterface = results
+	return m
+}
 //解析拼接sql语句
 func (m *Models) analysis() (sqlstr string) {
 	switch m.ParamIdentifier {
